@@ -29,8 +29,11 @@ def run_knn_analysis(data_path, k_value=7, test_size=0.2, random_state=0):
     # Load data
     df = pd.read_csv(data_path)
     
+    # Encode Gender
+    df["Gender"] = df["Gender"].map({"Male": 0, "Female": 1})
+    
     # Prepare features and target
-    X = df[['Age', 'EstimatedSalary']]
+    X = df[['Gender', 'Age', 'EstimatedSalary']]
     y = df['Purchased']
     
     # Split data
@@ -96,7 +99,7 @@ def run_knn_analysis(data_path, k_value=7, test_size=0.2, random_state=0):
 
 
 def plot_decision_boundary(X_train, y_train, model, scaler, ax, k_value):
-    """Plot decision boundary for the KNN model."""
+    """Plot decision boundary for the KNN model (Age vs Salary only)."""
     h = 1000  # step size in the mesh
     x_min, x_max = X_train['Age'].min() - 5, X_train['Age'].max() + 5
     y_min, y_max = X_train['EstimatedSalary'].min() - 5000, X_train['EstimatedSalary'].max() + 5000
@@ -104,7 +107,11 @@ def plot_decision_boundary(X_train, y_train, model, scaler, ax, k_value):
     xx, yy = np.meshgrid(np.arange(x_min, x_max, (x_max-x_min)/100),
                          np.arange(y_min, y_max, (y_max-y_min)/100))
     
-    Z = model.predict(scaler.transform(np.c_[xx.ravel(), yy.ravel()]))
+    # Use median gender value for visualization
+    median_gender = X_train['Gender'].median()
+    grid_points = np.c_[np.full(xx.ravel().shape, median_gender), xx.ravel(), yy.ravel()]
+    
+    Z = model.predict(scaler.transform(grid_points))
     Z = Z.reshape(xx.shape)
     
     ax.contourf(xx, yy, Z, alpha=0.3, cmap='RdYlGn')
@@ -165,8 +172,12 @@ def compare_k_values(data_path, k_values=[3, 5, 7, 9, 11, 15]):
     print(f"{'='*50}\n")
 
 
-
+# Example usage
 if __name__ == "__main__":
     import numpy as np
-
-    result = run_knn_analysis('Social_Network_Ads.csv', k_value=2)
+    
+    # Single k value analysis
+    result = run_knn_analysis('Social_Network_Ads.csv', k_value=7)
+    
+    # Compare multiple k values
+    # compare_k_values('Social_Network_Ads.csv', k_values=[3, 5, 7, 9, 11, 13, 15])
